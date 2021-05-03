@@ -1,0 +1,15 @@
+{
+  "name": "CentralNodeWallet",
+  "version": "1.0.0",
+  "description": "Fully tested Node.JS library which implements a Ethereum wallet which supports multiple addresses, ETH and ERC20 tokens and which takes all required gas from one central Ethereum account.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Neonious GmbH",
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.1.0",
+    "solc": "^0.8.4"
+  }
+}
