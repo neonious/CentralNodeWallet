@@ -32,9 +32,6 @@ async function run() {
 		console.log("Wallet deployed at: ", WALLET_CONTRACT);
 	}
 
-	console.log("ETH history", await util.getHistory(web3, null, INITIAL_ETH_ACCOUNT.address, 0));
-	console.log("ST history", await util.getHistory(web3, SIMPLETOKEN_CONTRACT, INITIAL_ETH_ACCOUNT.address, 0));
-
 	console.log("Adding 20 addresses.");
 	await wallet.addAddresses(web3, INITIAL_ETH_ACCOUNT.privateKey, WALLET_CONTRACT, 20);
 

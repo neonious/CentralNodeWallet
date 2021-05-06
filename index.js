@@ -20,16 +20,16 @@ async function initContract(web3, walletAddr) {
 	}
 }
 
-exports.create = async function create(web3, privateKey) {
+exports.create = async function create(web3, privateKey, onlyEstimate) {
 	await initContract(web3);
 
-	return await util.deployContract(web3, privateKey, contractCode);
+	return await util.deployContract(web3, privateKey, contractCode, onlyEstimate);
 }
 
-exports.addAddresses = async function addAddresses(web3, privateKey, walletAddr, addrCount) {
+exports.addAddresses = async function addAddresses(web3, privateKey, walletAddr, addrCount, onlyEstimate) {
 	const contract = await initContract(web3, walletAddr);
 
-	await util.sendPrivateKey(web3, privateKey, contract.methods.addAddresses(addrCount), walletAddr);
+	return await util.sendPrivateKey(web3, privateKey, contract.methods.addAddresses(addrCount), walletAddr, onlyEstimate);
 }
 
 exports.getAddresses = async function getAddresses(web3, walletAddr) {
@@ -45,11 +45,7 @@ exports.getAddresses = async function getAddresses(web3, walletAddr) {
 
 exports.transfer = async function transfer(web3, privateKey, walletAddr, tokenAddr, address, to, amount) {
 	const contract = await initContract(web3, walletAddr);
-
-	if (tokenAddr)
-		await util.sendPrivateKey(web3, privateKey, contract.methods.sendERC20To(tokenAddr, address, to, amount), walletAddr);
-	else
-		await util.sendPrivateKey(web3, privateKey, contract.methods.sendEthTo(address, to, amount), walletAddr);
+	await util.sendPrivateKey(web3, privateKey, contract.methods.sendTo(tokenAddr ? tokenAddr : '0x0000000000000000000000000000000000000000', address, to, amount), walletAddr);
 }
 
 exports.transferBatch = async function transferBatch(web3, privateKey, walletAddr, tokenAddr, addresses, to, amounts) {
@@ -57,11 +53,7 @@ exports.transferBatch = async function transferBatch(web3, privateKey, walletAdd
 		throw new Error('arrays not same length');
 
 	const contract = await initContract(web3, walletAddr);
-
-	if (tokenAddr)
-		await util.sendPrivateKey(web3, privateKey, contract.methods.batchSendERC20To(tokenAddr, addresses, to, amounts), walletAddr);
-	else
-		await util.sendPrivateKey(web3, privateKey, contract.methods.batchSendEthTo(addresses, to, amounts), walletAddr);
+	await util.sendPrivateKey(web3, privateKey, contract.methods.batchSendTo(tokenAddr ? tokenAddr : '0x0000000000000000000000000000000000000000', addresses, to, amounts), walletAddr);
 }
 
 exports.transferBatch2 = async function transferBatch2(web3, privateKey, walletAddr, tokenAddr, addresses, tos, amounts) {
@@ -69,9 +61,5 @@ exports.transferBatch2 = async function transferBatch2(web3, privateKey, walletA
 		throw new Error('arrays not same length');
 
 	const contract = await initContract(web3, walletAddr);
-
-	if (tokenAddr)
-		await util.sendPrivateKey(web3, privateKey, contract.methods.batchSendERC20To2(tokenAddr, addresses, tos, amounts), walletAddr);
-	else
-		await util.sendPrivateKey(web3, privateKey, contract.methods.batchSendEthTo2(addresses, tos, amounts), walletAddr);
+	await util.sendPrivateKey(web3, privateKey, contract.methods.batchSendTo2(tokenAddr ? tokenAddr : '0x0000000000000000000000000000000000000000', addresses, tos, amounts), walletAddr);
 }

@@ -112,9 +112,9 @@ exports.getHistory = async function getHistory(web3, tokenAddr, address, fromBlo
 		if (!erc20Contracts[tokenAddr])
 			erc20Contracts[tokenAddr] = new web3.eth.Contract(ERC20_ABI, tokenAddr);
 
-		const raw = await erc20Contracts[tokenAddr].getPastEvents("Transfer", { fromBlock: fromBlock ? fromBlock : 0, address: tokenAddr });
+		const raw = await erc20Contracts[tokenAddr].getPastEvents("Transfer", { fromBlock: fromBlock ? fromBlock : 0 });
 		for (let i = 0; i < raw.length; i++)
-			if (raw[i].address == tokenAddr && (raw[i].returnValues[0] == address || raw[i].returnValues[1] == address))
+			if (raw[i].address == tokenAddr && (!address || raw[i].returnValues[0] == address || raw[i].returnValues[1] == address))
 				res.transfers.push({
 					transaction: raw[i].transactionHash,
 					from: raw[i].returnValues[0],
@@ -123,14 +123,14 @@ exports.getHistory = async function getHistory(web3, tokenAddr, address, fromBlo
 					timestamp: (await web3.eth.getBlock(raw[i].blockNumber)).timestamp
 				});
 	} else {
-		for (let i = fromBlock | 0; i < res.atBlock; i++) {
+		for (let i = fromBlock | 0; i < res.nextBlock; i++) {
 			const block = await web3.eth.getBlock(i, true);
 			if (block.transactions.length)
 				for (let j = 0; j < block.transactions.length; j++) {
-					if ((block.transactions[j].value | 0) && (block.transactions[j].from == address || block.transactions[j].to == address))
+					if ((block.transactions[j].value | 0) && (!address || block.transactions[j].from == address || block.transactions[j].to == address))
 						res.transfers.push({
 							transaction: block.transactions[j].hash,
-							form: block.transactions[j].from,
+							from: block.transactions[j].from,
 							to: block.transactions[j].to,
 							amount: human ? block.transactions[j].value * fac : block.transactions[j].value,
 							timestamp: block.timestamp
@@ -167,12 +167,16 @@ exports.transfer = async function transfer(web3, privateKey, tokenAddr, to, amou
 	}
 }
 
-exports.sendPrivateKey = async function sendPrivateKey(web3, privateKey, query, to) {
+exports.sendPrivateKey = async function sendPrivateKey(web3, privateKey, query, to, onlyEstimate) {
 	let account = accounts[privateKey];
 	if (!account)
 		account = accounts[privateKey] = await web3.eth.accounts.privateKeyToAccount(privateKey);
 
-	let gas = await query.estimateGas({ from: account.address }) * 2;
+	let gas = await query.estimateGas({ from: account.address });
+	if(onlyEstimate)
+		return gas;
+
+	gas *= 2;
 	if (gas > 7000000)
 		gas = 7000000;
 
@@ -187,20 +191,20 @@ exports.sendPrivateKey = async function sendPrivateKey(web3, privateKey, query, 
 	);
 }
 
-exports.deployContract = async function deployContract(web3, privateKey, contract, ...args) {
+exports.deployContract = async function deployContract(web3, privateKey, contract, onlyEstimate, ...args) {
 	const contractObj = new web3.eth.Contract(contract.abi);
 	const contractTx = contractObj.deploy({
 		data: contract.evm.bytecode.object,
 		arguments: args
 	});
 
-	const receipt = await exports.sendPrivateKey(web3, privateKey, contractTx);
-	return receipt.contractAddress;
+	const receipt = await exports.sendPrivateKey(web3, privateKey, contractTx, undefined, onlyEstimate);
+	return onlyEstimate ? receipt : receipt.contractAddress;
 }
 
 exports.deploySimpleToken = async function deploySimpleToken(web3, privateKey, name, symbol, initialSupply) {
 	const code = JSON.parse(await fs.promises.readFile(path.join(__dirname, 'contracts/simpleToken.json'), 'utf8'));
 	const contract = code.contracts['simpleToken.sol'].SimpleToken;
 
-	return await exports.deployContract(web3, privateKey, contract, name, symbol, initialSupply);
+	return await exports.deployContract(web3, privateKey, contract, false, name, symbol, initialSupply);
 }

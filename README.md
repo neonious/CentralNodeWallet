@@ -4,11 +4,18 @@ Fully tested Node.JS library which implements a Ethereum wallet which supports m
 
 To implement that the wallet's addresses do not get their balance reduced by transactions, the wallet's addresses are actually smart contracts. So, to transfer ETH or ERC20 tokens out of the wallet's addresses, the custom calls in the API specification below have to be called.
 
-This is what powers the Neonious Token Sale.
-
 This project is based on https://github.com/Meshugah/ERC20-CommonGasWallet/ however adds a full Node.JS API and the ability to support ETH.
 
 This project does not require Truffle.
+
+
+## Gas statistics
+
+Gas needed to deploy wallet: 1.292.339
+
+Gas needed to add 20 addresses to wallet: 6.238.207
+
+Transfering ETH/tokens is far cheaper. The above two transactions are so expensive because they require deploying smart contracts.
 
 
 ## API
@@ -16,11 +23,11 @@ This project does not require Truffle.
 ### index.js
 The actual wallet API
 
-async function create(web3, privateKey)
-Creates a new wallet without addresses. Private key of the central account is needed because the wallet is a smart contract which gets deployed. Returns the wallet's address. Note that the wallet's address cannot be paid, it is only to manage the wallet.
+async function create(web3, privateKey, onlyEstimate)
+Creates a new wallet without addresses. Private key of the central account is needed because the wallet is a smart contract which gets deployed. Returns the wallet's address. Note that the wallet's address cannot be paid, it is only to manage the wallet. If onlyEstimate is true, returns estimated gas cost without actually doing the transaction.
 
-async function addAddresses(web3, privateKey, walletAddr, addrCount)
-Adds the specific number of addresses to the wallet. Is a transaction with the wallet smart contract.
+async function addAddresses(web3, privateKey, walletAddr, addrCount, onlyEstimate)
+Adds the specific number of addresses to the wallet. Is a transaction with the wallet smart contract. If onlyEstimate is true, returns estimated gas cost without actually doing the transaction.
 
 async function getAddresses(web3, walletAddr)
 Returns the addresses of the wallet. These addresses can be paid via ETH or ERC20 tokens.
@@ -60,11 +67,11 @@ Transfers is a array of objects with the properties transaction, from, to, amoun
 async function transfer(web3, privateKey, tokenAddr, to, amount)
 Transfers ETH in Wei (if tokenAddr = null) or ERC20 tokens (in native unit) from own account to the account specified as to.
 
-async function sendPrivateKey(web3, privateKey, query, to)
-Sends the transaction specified in query to the address specified in to.
+async function sendPrivateKey(web3, privateKey, query, to, onlyEstimate)
+Sends the transaction specified in query to the address specified in to. If onlyEstimate is true, returns estimated gas cost without actually doing the transaction.
 
-async function deployContract(web3, privateKey, contract, ...args)
-Deploys the contract specified. The constructor of hte contract is called with the arguments specified. See the code of deploySimpleToken as an example on how to use.
+async function deployContract(web3, privateKey, contract, onlyEstimate, ...args)
+Deploys the contract specified. The constructor of hte contract is called with the arguments specified. See the code of deploySimpleToken as an example on how to use. If onlyEstimate is true, returns estimated gas cost without actually doing the transaction.
 
 async function deploySimpleToken(web3, privateKey, name, symbol, amount)
 Deploys a simple ERC20 token with the name, symbol and the token amount specified, which is in native units and given to the contract creator. The decimals is set to 18.
